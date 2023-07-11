@@ -16,6 +16,7 @@ void option_e(int mask, char ch);
 void option_s(int mask, char prev, char ch, int *flag);
 void option_nb(int mask, char prev, char ch, int *line);
 int option_tt(int mask, char ch);
+int error_msg(char *fmt, char *arg);
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -25,7 +26,7 @@ int main(int argc, char **argv) {
 
     int mask = 0, i = 1, mode = 0;
 
-    while ((argv[i][0] == '-') || (mode = !strncmp(argv[i], "--", 2))) {    //Надо проверить
+    while ((mode = !strncmp(argv[i], "--", 2)) || (argv[i][0] == '-')) {    //Надо проверить
         parseFlag(&mask, mode, argv[i++]);
     }
 
@@ -51,6 +52,8 @@ void parseFlagWord(int *mask, char *flag) {
             *mask |= 1 << 2;
         } else if (!strcmp(flag, "--squeeze-blank")) {
             *mask |= 1 << 1;
+        } else {
+            error_msg("No such flag: '%s'\n", flag);
         }
     }
 }
@@ -62,8 +65,6 @@ void parseFlagSingle(int *mask, char *flag) {
                 *mask |= (1 << 4 | 1 << 2);
                 break;
             case 'e':
-                *mask |= 1 << 3;
-                break;
             case 'E':
                 *mask |= 1 << 3;
                 break;
@@ -74,11 +75,11 @@ void parseFlagSingle(int *mask, char *flag) {
                 *mask |= 1 << 1;
                 break;
             case 't':
-                *mask |= 1 << 0;
-                break;
             case 'T':
                 *mask |= 1 << 0;
                 break;
+            default:
+                error_msg("No such flag: '%s'\n", flag);
         }
     }
 }
@@ -88,8 +89,7 @@ void printFile(int mask, char *fileName) {
     char ch, prev = '\n';
     int line = 1, flag = 0;
     if (fp == NULL) {
-        printf("No such file '%s'.\n", fileName);
-        exit(1);
+            error_msg("No such file: '%s'\n", fileName);
     }
 
     while ((ch = getc(fp)) != EOF) {
@@ -131,4 +131,9 @@ int option_tt(int mask, char ch) {
 void option_nb(int mask, char prev, char ch, int *line) {
     if (prev == '\n' && NFLAG && (!BFLAG || ch != '\n'))
         printf("%6d  ", (*line)++);
+}
+
+int error_msg(char *fmt, char *arg) {
+    printf(fmt, arg);
+    exit(1);
 }
