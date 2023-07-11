@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
     int mask = 0, i = 1, mode = 0;
 
-    while ((mode = !strncmp(argv[i], "--", 2)) || (argv[i][0] == '-')) {    //Надо проверить
+    while ((mode = !strncmp(argv[i], "--", 2)) || (argv[i][0] == '-')) {
         parseFlag(&mask, mode, argv[i++]);
     }
 
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 }
 
 void parseFlag(int *mask, int mode, char *flag) {
-    if (mode)  //К той же проверке
+    if (mode)
         parseFlagWord(mask, flag);
     else
         parseFlagSingle(mask, flag);
