@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define TFLAG (mask & (1 << 0))
@@ -16,12 +17,12 @@ void option_e(int mask, char ch);
 void option_s(int mask, char prev, char ch, int *flag);
 void option_nb(int mask, char prev, char ch, int *line);
 int option_tt(int mask, char ch);
-int error_msg(char *fmt, char *arg);
+int error_msg(int condition, const char *fmt, ...);
 
 int main(int argc, char **argv) {
-    if (argc < 2) error_msg("Usage: s21_cat <opt_1> ... <opt_n> <file_1> ... <file_m>\n", NULL);
+    error_msg(argc < 2, "Usage: s21_cat <opt_1> ... <opt_n> <file_1> ... <file_m>\n");
 
-    int mask = 0, i = 1, mode = 0;
+    int mask = 0, mode = 0, i = 1;
 
     while ((mode = !strncmp(argv[i], "--", 2)) || (argv[i][0] == '-')) {
         parseFlag(&mask, mode, argv[i++]);
@@ -50,7 +51,7 @@ void parseFlagWord(int *mask, char *flag) {
         } else if (!strcmp(flag, "--squeeze-blank")) {
             *mask |= 1 << 1;
         } else {
-            error_msg("No such flag: '%s'\n", flag);
+            error_msg(1, "No such flag: '%s'\n", flag);
         }
     }
 }
@@ -76,7 +77,7 @@ void parseFlagSingle(int *mask, char *flag) {
                 *mask |= 1 << 0;
                 break;
             default:
-                error_msg("No such flag: '%s'\n", flag);
+                error_msg(1, "No such flag: '%s'\n", flag);
         }
     }
 }
@@ -85,9 +86,8 @@ void printFile(int mask, char *fileName) {
     FILE *fp = fopen(fileName, "r");
     char ch, prev = '\n';
     int line = 1, flag = 0;
-    if (fp == NULL) {
-            error_msg("No such file: '%s'\n", fileName);
-    }
+    
+    error_msg(fp == NULL, "No such file: '%s'\n", fileName);
 
     while ((ch = getc(fp)) != EOF) {
         option_s(mask, prev, ch, &flag);
@@ -130,7 +130,12 @@ void option_nb(int mask, char prev, char ch, int *line) {
         printf("%6d  ", (*line)++);
 }
 
-int error_msg(char *fmt, char *arg) {
-    printf(fmt, arg);
-    exit(1);
+int error_msg(int condition, const char *fmt, ...) {
+    if (condition) { //if condition is unnecessary, equate 'condition' to 1
+        va_list argp;
+        va_start(argp, fmt);
+        vprintf(fmt, argp);
+        va_end(argp);
+        exit(1);
+    }
 }
