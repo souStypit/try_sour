@@ -19,10 +19,7 @@ int option_tt(int mask, char ch);
 int error_msg(char *fmt, char *arg);
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        printf("Usage: s21_cat <opt_1> ... <opt_n> <file_1> ... <file_m>\n");
-        exit(1);
-    }
+    if (argc < 2) error_msg("Usage: s21_cat <opt_1> ... <opt_n> <file_1> ... <file_m>\n", NULL);
 
     int mask = 0, i = 1, mode = 0;
 
