@@ -6,8 +6,8 @@
 
 #define IFLAG (mask & REG_ICASE)
 
-void printFile(int mask, char *fileName);
-void parseFlag(int *mask, char *flag);
+void printFile(int mask, char *fileName, int *reti, regex_t *regex, char *patterns);
+void parseFlag(int *mask, char *flag, int *sem);
 void option_i(int mask, char ch);
 int error_msg(int condition, const char *fmt, ...);
 
@@ -18,33 +18,48 @@ int main(int argc, char **argv) {
     int reti;
     int mask = 0, mode = 0, i = 1;
     int cflags = 0;
+    int sem = 0;
+    char *patterns = NULL;
 
-    while (argv[i][0] == '-') parseFlag(&mask, argv[i++]);
+    while (argv[i][0] == '-' || sem) {
+        if (!sem) {
+            parseFlag(&mask, argv[i], &sem);
+        } else {
+            patterns = strdup(argv[i]);
+            sem = 0;
+        }
+        i++;
+    }
     
     if (IFLAG) cflags |= REG_ICASE;
 
-    reti = regcomp(&regex, argv[i], cflags);
+    reti = regcomp(&regex, argv[i++], cflags);
 
-    /*
-    *
-    *
-    * 
-    */
-    
-    reti = regexec(&regex, "abc", 0, NULL, 0);
-    if (!reti) {
-        printf("Match!\n");
-    } else {
-        printf("Not match!\n");
+    while (i < argc) {
+        printFile(mask, argv[i++], &reti, &regex, patterns);
     }
-
-    //while (i < argc) printFile(mask, argv[i++]);
-
+    
+    if (patterns) free(patterns);
     regfree(&regex);
     return 0;
 }
 
-void parseFlag(int *mask, char *flag) {
+void printFile(int mask, char *fileName, int *reti, regex_t *regex, char *patterns) {
+    FILE *fp = fopen(fileName, "r");
+    error_msg(fp == NULL, "No such file: '%s'\n", fileName);
+    
+    char ch;
+
+    *reti = regexec(regex, patterns, 0, NULL, 0);
+
+    while ((ch = getc(fp)) != EOF && ch != patterns[0]) {
+        
+    }
+
+    fclose(fp);
+}
+
+void parseFlag(int *mask, char *flag, int *sem) {
     for (int i = 1; i < (int)strlen(flag); i++) {
         switch (flag[i]) {
             case 'i':
@@ -54,6 +69,7 @@ void parseFlag(int *mask, char *flag) {
                 error_msg(1, "No such flag: '%s'\n", flag);
         }
     }
+    *sem = 1;
 }
 
 int error_msg(int condition, const char *fmt, ...) {
