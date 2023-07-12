@@ -24,16 +24,19 @@ int main(int argc, char **argv) {
     while (argv[i][0] == '-' || sem) {
         if (!sem) {
             parseFlag(&mask, argv[i], &sem);
+            printf("<flag: \t%s>\n", argv[i]);
+            printf("<mask: \t%d\n", mask);
         } else {
             patterns = strdup(argv[i]);
             sem = 0;
+            printf("<pattern: \t%s>\n", patterns);
         }
         i++;
     }
     
     if (IFLAG) cflags |= REG_ICASE;
 
-    reti = regcomp(&regex, argv[i++], cflags);
+    reti = regcomp(&regex, patterns, cflags);
 
     while (i < argc) {
         printFile(mask, argv[i++], &reti, &regex, patterns);
@@ -47,14 +50,36 @@ int main(int argc, char **argv) {
 void printFile(int mask, char *fileName, int *reti, regex_t *regex, char *patterns) {
     FILE *fp = fopen(fileName, "r");
     error_msg(fp == NULL, "No such file: '%s'\n", fileName);
+
+    printf("<file: \t%s>\n", fileName);
     
     char ch;
+    int ptr, google, startStr = 0;
 
     *reti = regexec(regex, patterns, 0, NULL, 0);
 
-    while ((ch = getc(fp)) != EOF && ch != patterns[0]) {
-        
+    while ((ch = getc(fp)) != EOF) {
+        if (ch == '\n') {
+            startStr = ftell(fp);
+        } else if (ch == patterns[0]) {
+            ptr = ftell(fp);
+            for (int i = 0; i < strlen(patterns); i++) {
+                if (ch != patterns[i]) break;
+                else printf("<%c>", ch);
+                ch = getc(fp);
+            }
+            printf("\n");
+            if (!google) {
+                fseek(fp, SEEK_SET, startStr);
+                while ((ch = getc(fp)) != '\n' || ch != EOF) {
+                    printf("%c", ch);
+                }
+            }
+            fseek(fp, SEEK_SET, ptr + 1);
+        }
     }
+
+    
 
     fclose(fp);
 }
