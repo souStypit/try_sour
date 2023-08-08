@@ -13,12 +13,10 @@
 #define NFLAG (mask & 1 << 4)
 #define LFLAG (mask & 1 << 5)
 
-void printFile(int mask, char *fileName, int *reti, regex_t *regex, char **patterns);
+void printFile(int mask, char *fileName, int *reti, regex_t *regex, char **patterns, int patCount);
 void parseFlag(int *mask, char *flag, int *sem);
 void option_i(int mask, char ch);
 int error_msg(int condition, const char *fmt, ...);
-
-int patCount = 0;
 
 int main(int argc, char **argv) {
     error_msg(argc < 2, "Usage: s21_cat <opt_1> ... <opt_n> <file_1> ... <file_m>\n");
@@ -30,6 +28,7 @@ int main(int argc, char **argv) {
     int sem = 0;
     int fileCount = 0;
     char **patterns;
+    int patCount = 0;
 
     while (argv[i][0] == '-' || sem) {
         if (!sem) {
@@ -49,9 +48,9 @@ int main(int argc, char **argv) {
     if ((fileCount = argc - i) > 1) mask |= 1;
     
     while (i < argc) {
-        printFile(mask, argv[i++], &reti, &regex, patterns);
+        printFile(mask, argv[i++], &reti, &regex, patterns, patCount);
     }
-    
+
     if (patterns) {
         for (int i = 0; i < patCount; i++) {
             free(patterns[i]);
@@ -59,11 +58,10 @@ int main(int argc, char **argv) {
         free(patterns);
     }
     regfree(&regex);
-    printf("2131331\n");
     return 0;
 }
 
-void printFile(int mask, char *fileName, int *reti, regex_t *regex, char **patterns) {
+void printFile(int mask, char *fileName, int *reti, regex_t *regex, char **patterns, int patCount) {
     FILE *fp = fopen(fileName, "r");
     error_msg(fp == NULL, "No such file: '%s'\n", fileName);
     
@@ -88,13 +86,15 @@ void printFile(int mask, char *fileName, int *reti, regex_t *regex, char **patte
             }
             i++;
         }
-        if (google && !CFLAG && !LFLAG) {
+        if (google) {
             matchCount++;
-            if (WRITE_FILE_NAME) printf("%s:", fileName);
-            if (NFLAG) printf("%d:", line_number);
-            printf("%s", line);
-            fflush(stdout);
-            google = 0;
+            if (!CFLAG && !LFLAG) {
+                if (WRITE_FILE_NAME) printf("%s:", fileName);
+                if (NFLAG) printf("%d:", line_number);
+                printf("%s", line);
+                fflush(stdout);
+                google = 0;
+            }
         }
 
         line_number++;

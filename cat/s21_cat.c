@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include "../common/common.h"
 
 #define TFLAG (mask & (1 << 0))
 #define SFLAG (mask & (1 << 1))
@@ -17,7 +18,6 @@ void option_e(int mask, char ch);
 void option_s(int mask, char prev, char ch, int *flag);
 void option_nb(int mask, char prev, char ch, int *line);
 int option_tt(int mask, char ch);
-int error_msg(int condition, const char *fmt, ...);
 
 int main(int argc, char **argv) {
     error_msg(argc < 2, "Usage: s21_cat <opt_1> ... <opt_n> <file_1> ... <file_m>\n");
@@ -128,14 +128,4 @@ int option_tt(int mask, char ch) {
 void option_nb(int mask, char prev, char ch, int *line) {
     if (prev == '\n' && NFLAG && (!BFLAG || ch != '\n'))
         printf("%6d  ", (*line)++);
-}
-
-int error_msg(int condition, const char *fmt, ...) {
-    if (condition) { //if condition is unnecessary, equate 'condition' to 1
-        va_list argp;
-        va_start(argp, fmt);
-        vprintf(fmt, argp);
-        va_end(argp);
-        exit(1);
-    }
 }
